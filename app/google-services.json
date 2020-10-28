@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "382648380456",
+    "firebase_url": "https://app-speedlimit-kotlinfirst.firebaseio.com",
+    "project_id": "app-speedlimit-kotlinfirst",
+    "storage_bucket": "app-speedlimit-kotlinfirst.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:382648380456:android:471bbdd3521a305454591d",
+        "android_client_info": {
+          "package_name": "com.kotlinFirst.project1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "382648380456-p9okd7q05ji0ua0jssqsf3f14pr2lug0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIOtFdI7EFzk2Ww3uBYD5oyt4mby80VP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "382648380456-p9okd7q05ji0ua0jssqsf3f14pr2lug0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
