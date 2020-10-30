@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.util.SparseIntArray
+import android.view.MotionEvent
 import android.view.Surface
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -23,6 +24,7 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
@@ -44,11 +46,16 @@ typealias  LumaListener = (luma: Double) -> Unit
 
 class CameraActivity : AppCompatActivity() {
     private var imageCapture: ImageCapture? = null
-    var extractedText : String? = null
+    var extractedText: String? = null
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
     lateinit var currentPhotoPath: String
-var resultIntent : Intent? = null
+    private lateinit var broadcastManager: LocalBroadcastManager
+    private var displayId: Int = -1
+    private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
+
+
+    var resultIntent: Intent? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.camera_activity)
@@ -122,6 +129,8 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener(Runnable {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+
             val preview = Preview.Builder().build().also {
                 try {
                     it.setSurfaceProvider(viewFinder.surfaceProvider)

@@ -14,16 +14,16 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-upload_Button.setOnClickListener{
-    val intent = Intent()
-    intent.type = "image/*"
-    intent.action = Intent.ACTION_GET_CONTENT
-    startActivityForResult(Intent.createChooser(intent, "Select Picture"), IMAGE_PROCESSING)
+        upload_Button.setOnClickListener {
+            val intent = Intent()
+            intent.type = "image/*"
+            intent.action = Intent.ACTION_GET_CONTENT
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"), IMAGE_PROCESSING)
 
-}
-        camera_button.setOnClickListener{
+        }
+        camera_button.setOnClickListener {
             val intent = Intent(applicationContext, CameraActivity::class.java)
-startActivity(intent)
+            startActivity(intent)
 
         }
 
@@ -31,21 +31,19 @@ startActivity(intent)
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-if(requestCode == IMAGE_PROCESSING && resultCode == RESULT_OK)
-{
+        if (requestCode == IMAGE_PROCESSING && resultCode == RESULT_OK) {
 
 
-    if(data!=null)
-    {
-        val uri=data.data
+            if (data != null) {
+                val uri = data.data
 
-        val resultData = Intent(applicationContext,ResultsLoaded::class.java)
-        resultData.putExtra("IMAGE",uri.toString())
-        resultData.putExtra("ACTIVITY_ID",ACTIVITY_ID)
-startActivity(resultData)
-    }
+                val resultData = Intent(applicationContext, ResultsLoaded::class.java)
+                resultData.putExtra("IMAGE", uri.toString())
+                resultData.putExtra("ACTIVITY_ID", ACTIVITY_ID)
+                startActivity(resultData)
+            }
 
-}
+        }
 
 
     }
@@ -56,7 +54,7 @@ startActivity(resultData)
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
         const val IMAGE_PROCESSING = 2
-        const val ACTIVITY_ID=11
+        const val ACTIVITY_ID = 11
     }
 
 }
