@@ -16,12 +16,15 @@ import android.provider.MediaStore
 import android.util.Log
 import android.util.SparseIntArray
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.Surface
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -39,6 +42,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 typealias  LumaListener = (luma: Double) -> Unit
 
@@ -143,19 +147,105 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
                     .build()
                     .also {
                         it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
-                            Log.d(TAG, "Average luminosity: $luma")
+                            //   Log.d(TAG, "Average luminosity: $luma")
                         })
                     }
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyzer)
-            } catch (e: Exception) {
-                Log.e(TAG, e.message, e)
+
+            cameraProvider.unbindAll()
+
+            val camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyzer)
+            val cameraControl = camera.cameraControl
+            val cameraInfo = camera.cameraInfo
+            //AutoFocus Implementation
+            val listener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    val currentZoomRatio: Float = cameraInfo.zoomState.value?.zoomRatio ?: 1F
+                    val delta = detector.scaleFactor
+                    cameraControl.setZoomRatio(currentZoomRatio * delta)
+                    return true
+                }
             }
 
+            val scaleGestureDetector = ScaleGestureDetector(viewFinder.context, listener)
+
+            viewFinder.setOnTouchListener { _, event ->
+                scaleGestureDetector.onTouchEvent(event)
+                if (event.action == MotionEvent.ACTION_DOWN) {
+                    val factory = viewFinder.meteringPointFactory
+                    val point = factory.createPoint(event.x, event.y)
+                    val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
+                            .setAutoCancelDuration(5, TimeUnit.SECONDS)
+                            .build()
+                    cameraControl.startFocusAndMetering(action)
+                }
+                true
+            }
+            /*viewFinder.setOnTouchListener {_,event ->
+
+                return@setOnTouchListener when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        val listener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                                val zoomRatio =cameraInfo.zoomState?.value?.zoomRatio ?: 0f
+                                val scale = zoomRatio * detector.scaleFactor
+                                camera!!.cameraControl.setZoomRatio(scale)
+                                return true
+                            }
+                        }
+                        val scaleGestureDetector = ScaleGestureDetector(this, listener)
+
+                        scaleGestureDetector.onTouchEvent(event)
+
+
+                        true}
+                    MotionEvent.ACTION_UP -> {
+                        val factory: MeteringPointFactory = SurfaceOrientedMeteringPointFactory(
+                                viewFinder.width.toFloat(), viewFinder.height.toFloat()
+                        )
+                        val autoFocusPoint = factory.createPoint(event.x, event.y)
+                        try {
+                            camera?.cameraControl?.startFocusAndMetering(
+                                    FocusMeteringAction.Builder(
+                                            autoFocusPoint,
+                                            FocusMeteringAction.FLAG_AF
+                                    ).apply {
+                                        //focus only when the user tap the preview
+                                        disableAutoCancel()
+                                    }.build()
+                            )
+                        } catch (e: CameraInfoUnavailableException) {
+                            Log.d("ERROR", "cannot access camera", e)
+                        }
+                        viewFinder.performClick()
+                        true
+                    }
+                    else -> false // Unhandled event.
+                }
+                *//*if (event.action != MotionEvent.ACTION_UP){
+                        return@setOnTouchListener false
+                    }
+                    val factory =viewFinder.meteringPointFactory
+                    val point = factory.createPoint(event.x, event.y)
+                    val action = FocusMeteringAction.Builder(point)
+                            .build()
+                    cameraControl.startFocusAndMetering(action)
+                    return@setOnTouchListener true*//*
+
+                }*/
+            //Zoom Control Implementation
+            zoomSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    cameraControl.setLinearZoom((progress / 100.toFloat()))
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            })
         }, ContextCompat.getMainExecutor(this))
+
     }
 
 
