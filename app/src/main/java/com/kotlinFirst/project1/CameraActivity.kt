@@ -152,37 +152,38 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
                     }
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            try {
+                cameraProvider.unbindAll()
 
-            cameraProvider.unbindAll()
-
-            val camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyzer)
-            val cameraControl = camera.cameraControl
-            val cameraInfo = camera.cameraInfo
-            //AutoFocus Implementation
-            val listener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                override fun onScale(detector: ScaleGestureDetector): Boolean {
-                    val currentZoomRatio: Float = cameraInfo.zoomState.value?.zoomRatio ?: 1F
-                    val delta = detector.scaleFactor
-                    cameraControl.setZoomRatio(currentZoomRatio * delta)
-                    return true
+                val camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyzer)
+                val cameraControl = camera.cameraControl
+                val cameraInfo = camera.cameraInfo
+                //AutoFocus Implementation
+                val listener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                    override fun onScale(detector: ScaleGestureDetector): Boolean {
+                        val currentZoomRatio: Float = cameraInfo.zoomState.value?.zoomRatio ?: 1F
+                        val delta = detector.scaleFactor
+                        cameraControl.setZoomRatio(currentZoomRatio * delta)
+                        return true
+                    }
                 }
-            }
 
-            val scaleGestureDetector = ScaleGestureDetector(viewFinder.context, listener)
+                val scaleGestureDetector = ScaleGestureDetector(viewFinder.context, listener)
 
-            viewFinder.setOnTouchListener { _, event ->
-                scaleGestureDetector.onTouchEvent(event)
-                if (event.action == MotionEvent.ACTION_DOWN) {
-                    val factory = viewFinder.meteringPointFactory
-                    val point = factory.createPoint(event.x, event.y)
-                    val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
-                            .setAutoCancelDuration(5, TimeUnit.SECONDS)
-                            .build()
-                    cameraControl.startFocusAndMetering(action)
+                viewFinder.setOnTouchListener { _, event ->
+                    scaleGestureDetector.onTouchEvent(event)
+                    if (event.action == MotionEvent.ACTION_DOWN) {
+                        val factory = viewFinder.meteringPointFactory
+                        val point = factory.createPoint(event.x, event.y)
+                        val action = FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
+                                .setAutoCancelDuration(5, TimeUnit.SECONDS)
+                                .build()
+                        cameraControl.startFocusAndMetering(action)
+                    }
+                    true
                 }
-                true
-            }
-            /*viewFinder.setOnTouchListener {_,event ->
+                //Tap to focus Implements
+                /*viewFinder.setOnTouchListener {_,event ->
 
                 return@setOnTouchListener when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
@@ -223,7 +224,8 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
                     }
                     else -> false // Unhandled event.
                 }
-                *//*if (event.action != MotionEvent.ACTION_UP){
+                */
+                /*if (event.action != MotionEvent.ACTION_UP){
                         return@setOnTouchListener false
                     }
                     val factory =viewFinder.meteringPointFactory
@@ -234,16 +236,19 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
                     return@setOnTouchListener true*//*
 
                 }*/
-            //Zoom Control Implementation
-            zoomSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    cameraControl.setLinearZoom((progress / 100.toFloat()))
-                }
+                //Zoom Control Implementation
+                zoomSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                        cameraControl.setLinearZoom((progress / 100.toFloat()))
+                    }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                    override fun onStartTrackingTouch(seekBar: SeekBar?) {}
 
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-            })
+                    override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                })
+            } catch (ex: Exception) {
+                Log.d(TAG, ex.message)
+            }
         }, ContextCompat.getMainExecutor(this))
 
     }
