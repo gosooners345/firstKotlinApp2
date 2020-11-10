@@ -27,9 +27,9 @@ class ResultsLoaded : AppCompatActivity() {
     }
 
     private fun processPhotoResults(uri: Uri?) {
-        var fireText: FirebaseVisionText? = null
+        var fireText: FirebaseVisionText?
         //Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
-
+        var detectedWords: String?
         val image: FirebaseVisionImage =
                 FirebaseVisionImage.fromFilePath(this, uri!!)
 
@@ -45,19 +45,25 @@ class ResultsLoaded : AppCompatActivity() {
                         val blockLanguages = block.recognizedLanguages
                         val blockCornerPoints = block.cornerPoints
                         val blockFrame = block.boundingBox
+
                         for (line in block.lines) {
                             val lineText = line.text
                             val lineConfidence = line.confidence
                             val lineLanguages = line.recognizedLanguages
                             val lineCornerPoints = line.cornerPoints
                             val lineFrame = line.boundingBox
+
                             for (element in line.elements) {
                                 val elementText = element.text
                                 val elementConfidence = element.confidence
                                 val elementLanguages = element.recognizedLanguages
                                 val elementCornerPoints = element.cornerPoints
                                 val elementFrame = element.boundingBox
+                                if (elementText.contains("MONOPOLY")) {
+                                    Toast.makeText(baseContext, elementText, Toast.LENGTH_SHORT).show()
+                                }
                             }
+
                         }
                     }
                 }

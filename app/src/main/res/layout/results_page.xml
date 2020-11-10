@@ -31,6 +31,7 @@
                     android:layout_marginTop="16dp"
                     android:isScrollContainer="true"
                     android:text="TextView"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                     android:textIsSelectable="true" />
 
                 <ImageView
@@ -42,7 +43,9 @@
                     android:id="@+id/resultStatsView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="TextView" />
+                    android:text="TextView"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
             </LinearLayout>
         </ScrollView>
 

@@ -4,11 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#000000"
     tools:context=".CameraActivity">
+
+    <ImageButton
+        android:id="@+id/button_capture"
+        android:layout_width="75dp"
+        android:layout_height="75dp"
+        android:layout_gravity="center"
+
+        android:layout_marginBottom="8dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="Shutter Button"
+        android:src="@drawable/ic_shutter_button_image"
+        android:text="@string/capture"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <SeekBar
         android:id="@+id/zoomSlider"
-        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        style="@android:style/Widget.DeviceDefault.SeekBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
@@ -18,23 +34,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
-        android:id="@+id/button_capture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/capture"
-
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/zoomSlider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
