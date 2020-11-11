@@ -15,9 +15,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.util.SparseIntArray
-import android.view.MotionEvent
-import android.view.ScaleGestureDetector
-import android.view.Surface
+import android.view.*
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -59,23 +57,23 @@ class CameraActivity : AppCompatActivity() {
     private var lensFacing: Int = CameraSelector.LENS_FACING_BACK
     var zoomRatio: Float? = null
 
+    //var modeString = String? = null
     var resultIntent: Intent? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.camera_activity)
         if (allPermissionsGranted()) {
             startCamera()
+            camera_shutter_button.setOnClickListener { takePhoto() }
+            viewFinder.setOnLongClickListener { camera_shutter_button.performClick() }
+            outputDirectory = getOutputDirectory()
+            cameraExecutor = Executors.newSingleThreadExecutor()
         } else {
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
-        button_capture.setOnClickListener { takePhoto() }
-        viewFinder.setOnLongClickListener { button_capture.performClick() }
-        outputDirectory = getOutputDirectory()
-        cameraExecutor = Executors.newSingleThreadExecutor()
-
     }
 
-
+    //Get permissions request and result
     override fun onRequestPermissionsResult(
             requestCode: Int, permissions: Array<String>, grantResults:
             IntArray) {
@@ -91,6 +89,7 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
+    //Shutter Press
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -108,8 +107,10 @@ class CameraActivity : AppCompatActivity() {
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                 val savedUri = Uri.fromFile(photoFile)
                 val msg = "Photo capture Succeeded : $savedUri"
-val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
-                resultIntent.putExtra("IMAGE",savedUri.toString())
+                val extractMode = modeSpinner.selectedItem.toString()
+                val resultIntent = Intent(applicationContext, ResultsLoaded::class.java)
+                resultIntent.putExtra("MODE", extractMode)
+                resultIntent.putExtra("IMAGE", savedUri.toString())
                 resultIntent.putExtra("ACTIVITY_ID", ACTIVITY_ID)
                 startActivity(resultIntent)
             }
@@ -117,7 +118,7 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
 
     }
 
-
+    //Load Camera
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener(Runnable {
@@ -141,12 +142,13 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
                     }
 
             val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-            /*   try {*/
+
             cameraProvider.unbindAll()
             val camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalyzer)
             val cameraControl = camera.cameraControl
             val cameraInfo = camera.cameraInfo
-            //AutoFocus Implementation
+
+            // Allows for pinch to zoom and tap to focus controls
             val listener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
                     val currentZoomRatio: Float = cameraInfo.zoomState.value?.zoomRatio ?: 1F
@@ -169,24 +171,9 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
                 }
                 true
             }
-
-
-            //Tap to focus Implements
-
-            //Zoom Control Implementation
-            zoomSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    cameraControl.setLinearZoom((progress / 100.toFloat()))
-
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-            })
             /*} catch (ex: Exception) {
-                Log.d(TAG, ex.message)
-            }*/
+    Log.d(TAG, ex.message)
+}*/
         }, ContextCompat.getMainExecutor(this))
 
     }
@@ -304,7 +291,7 @@ val resultIntent =  Intent(applicationContext,ResultsLoaded::class.java)
 
     companion object {
         private const val TAG = "Speed-Limit"
-        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     const val ACTIVITY_ID = 12

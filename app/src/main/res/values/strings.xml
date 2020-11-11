@@ -6,7 +6,6 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
-
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="capture">Capture</string>
@@ -22,4 +21,15 @@
     <string name="delete_button_alt">Delete</string>
     <string name="delete_dialog">Delete current photo?</string>
     <string name="delete_title">Confirm</string>
+    <string name="title_activity_new__main_">MainActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string-array name="scanner_options">
+        <item name="speed_limit">Speed Limit Scanner</item>
+        <item name="document_scanner">Document Scanner</item>
+        <item name="accessibility_helper">Accessibility helper</item>
+        <item name="text_extractor">Text Extraction</item>
+        <item name="note_saver">Save a Note</item>
+    </string-array>
 </resources>
