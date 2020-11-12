@@ -42,6 +42,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/paths" />
         </provider>
+        <service
+            android:name=".ResultsLoaded"
+            android:foregroundServiceType="location">
+            <!-- Any inner elements would go here. -->
+        </service>
     </application>
     <uses-feature android:name="android.hardware.camera.any" />
 

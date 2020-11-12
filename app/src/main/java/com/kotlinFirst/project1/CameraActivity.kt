@@ -294,7 +294,9 @@ class CameraActivity : AppCompatActivity() {
         const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    const val ACTIVITY_ID = 12
+        private val LOCATION_PERMISSIONS = arrayOf(Manifest.permission_group.LOCATION)
+
+        const val ACTIVITY_ID = 12
 
     }
 }
