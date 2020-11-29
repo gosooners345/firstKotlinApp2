@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
                 val resultData = Intent(applicationContext, ResultsLoaded::class.java)
                 resultData.putExtra("IMAGE", uri.toString())
+                resultData.putExtra("MODE", modeSpinner2.selectedItem.toString())
                 resultData.putExtra("ACTIVITY_ID", ACTIVITY_ID)
                 startActivity(resultData)
             }

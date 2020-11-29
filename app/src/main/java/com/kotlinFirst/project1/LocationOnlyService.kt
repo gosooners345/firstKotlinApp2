@@ -17,11 +17,11 @@ import com.google.android.gms.common.util.SharedPreferencesUtils
 import com.google.android.gms.location.*
 import java.util.concurrent.TimeUnit
 
-class LocationOnlyService : Service() {
+class LocationOnlyService : Service(), LocationListener {
     //location Variables
     private lateinit var locationRequest: LocationRequest
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
+    public lateinit var locationCallback: LocationCallback
     public var currentLocation: Location? = null
 
     //Service Binder
@@ -51,8 +51,8 @@ class LocationOnlyService : Service() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         locationRequest = LocationRequest().apply {
-            interval = TimeUnit.SECONDS.toMillis(60)
-            fastestInterval = TimeUnit.SECONDS.toMillis(30)
+            interval = TimeUnit.SECONDS.toMillis(30)
+            fastestInterval = TimeUnit.SECONDS.toMillis(5)
             maxWaitTime = TimeUnit.MINUTES.toMillis(2)
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
@@ -60,7 +60,18 @@ class LocationOnlyService : Service() {
             override fun onLocationResult(p0: LocationResult?) {
                 super.onLocationResult(p0)
                 if (p0?.lastLocation != null) {
+
                     currentLocation = p0.lastLocation
+                    Log.d(TAG, "Location updated $currentLocation")
+                    ResultsLoaded.locationList.add(currentLocation!!)
+                    var count = ResultsLoaded.locationList.count()
+
+                    if (count > 1) {
+                        ResultsLoaded.locationList.updateSpeed(ResultsLoaded.locationList.get(count - 1), ResultsLoaded.locationList.get(count - 2))
+                    } else {
+                        ResultsLoaded.locationList.updateSpeed(ResultsLoaded.locationList.get(count - 1))
+                    }
+                    // ResultsLoaded.locationList.speed=updateSpeed(currentLocation)
                     val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
                     intent.putExtra(EXTRA_LOCATION, currentLocation)
                     LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
@@ -131,6 +142,16 @@ class LocationOnlyService : Service() {
         configurationChange = true
     }
 
+    public fun updateSpeed(locationx: Location?): Float {
+        var speed = 0f
+
+        if (locationx?.hasSpeed() == true) {
+            speed = locationx.speed * 2.2369362920544f / 3.6f
+        }
+        return speed
+    }
+
+
     fun subscribeToLocationUpdates() {
         Log.d(TAG, "subscribeToLocationUpdates()")
 
@@ -142,9 +163,10 @@ class LocationOnlyService : Service() {
         startService(Intent(applicationContext, LocationOnlyService::class.java))
 
         try {
-            // TODO: Step 1.5, Subscribe to location changes.
+
             fusedLocationProviderClient.requestLocationUpdates(
                     locationRequest, locationCallback, Looper.myLooper())
+            Log.i(TAG, "Location updates activated. ")
         } catch (unlikely: SecurityException) {
             SharedPreferenceUtil.saveLocationTrackingPref(this, false)
             Log.e(TAG, "Lost location permissions. Couldn't remove updates. $unlikely")
@@ -267,5 +289,17 @@ class LocationOnlyService : Service() {
     inner class LocalBinder : Binder() {
         internal val service: LocationOnlyService
             get() = this@LocationOnlyService
+    }
+
+    override fun onLocationChanged(p0: Location?) {
+        var speed = 0.0;
+        if (this.currentLocation != null) {
+            speed = Math.sqrt(Math.pow(p0!!.longitude - currentLocation!!.longitude, 2.0) + Math.pow(p0!!.latitude - currentLocation!!.getLatitude(), 2.0)
+            ) / (p0!!.getTime() - currentLocation!!.getTime())
+            if (p0.hasSpeed()) {
+                speed = p0.speed.toDouble()
+            }
+            currentLocation = p0
+        }
     }
 }
