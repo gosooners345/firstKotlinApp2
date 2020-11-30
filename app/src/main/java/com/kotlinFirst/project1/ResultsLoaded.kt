@@ -43,7 +43,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     lateinit var timer: CountDownTimer
     private lateinit var sharedPreferences: SharedPreferences
     lateinit var locationCallback: Object
-
+    var firstLocation: Location? = null
     var wordCount: Int? = null
     var locManager: LocationManager? = null
     var li: LocationListener? = null
@@ -118,7 +118,9 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
 
         val serviceIntent = Intent(this, LocationOnlyService::class.java)
         bindService(serviceIntent, foregroundOnlyServiceConnection, Context.BIND_AUTO_CREATE)
-        speed = updateSpeed(foregroundOnlyLocationService?.currentLocation)
+
+        firstLocation = (foregroundOnlyLocationService?.currentLocation)
+        speed = updateSpeed(firstLocation)
     }
 
     override fun onResume() {
@@ -255,11 +257,11 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
 
 
     public fun updateSpeedViews() {
+        speed = locationList!!.speed!!
+        Toast.makeText(this, speed!!.toString(), Toast.LENGTH_SHORT).show()
+        currSpeedLabel.text = (speed!!).toString() + " MPH"
 
-        Toast.makeText(this, locationList!!.speed.toString(), Toast.LENGTH_SHORT).show()
-        currSpeedLabel.text = (locationList.speed!!).toString() + " MPH"
-
-        if (locationList.speed!! > postedSpeedLimit!!) {
+        if (speed!! > postedSpeedLimit!!) {
             Toast.makeText(this, "GOING TOO FAST", Toast.LENGTH_SHORT).show()
             currSpeedLabel.setTextColor(Color.RED)
         }
@@ -292,34 +294,15 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
         var nCurrentSpeed = 0f
         var speed = 0f
         if (location != null) {
-            /* Math.sqrt(Math.pow(location.longitude-lastLocation!!.longitude,2.0) +Math.pow(
-                location.latitude - lastLocation.latitude, 2.0)
-            )*/
-            speed = (lastLocation!!.distanceTo(location) / (location.time - lastLocation.time))
-            speed = speed * 2.2369362920544f / 3.6f
+            speed = (location!!.distanceTo(lastLocation!!) / (location.time - lastLocation.time))
+            speed = speed * 2.2369362920544f
             if (location.hasSpeed()) {
                 speed = location.speed * 2.2369362920544f / 3.6f
             }
 
         }
-
-
-        /*  if (location != null) {
-               var sLocation : SLocation = location as SLocation
-            nCurrentSpeed = sLocation.speed
-           nCurrentSpeed = location.speed * 3.6f
-           nCurrentSpeed = nCurrentSpeed * 2.2369362920544f / 3.6f
-
-
-       }*/
         nCurrentSpeed = Math.round(speed).toFloat()
         return nCurrentSpeed
-
-        /*val fmt = Formatter(StringBuilder())
-        fmt.format(Locale.US, "%5.1f", nCurrentSpeed)
-        var strCurrentSpeed = fmt.toString()
-        strCurrentSpeed = strCurrentSpeed.replace(' ', '0')
-        var strUnits = "miles/hour"*/
 
 
     }
@@ -368,6 +351,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     private fun updateButtonState(trackingLocation: Boolean) {
         if (trackingLocation) {
             stopButton.text = getString(R.string.stop_location_updates_button_text)
+            firstLocation = foregroundOnlyLocationService?.currentLocation
             Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({
                 Log.d("Speed Test", "ExecutorMethod Updating speed")
                 updateSpeedViews()

@@ -67,9 +67,9 @@ class LocationOnlyService : Service(), LocationListener {
                     var count = ResultsLoaded.locationList.count()
 
                     if (count > 1) {
-                        ResultsLoaded.locationList.updateSpeed(ResultsLoaded.locationList.get(count - 1), ResultsLoaded.locationList.get(count - 2))
+                        ResultsLoaded.locationList.updateSpeed(ResultsLoaded.locationList.get(0), ResultsLoaded.locationList.get(count - 1))
                     } else {
-                        ResultsLoaded.locationList.updateSpeed(ResultsLoaded.locationList.get(count - 1))
+                        ResultsLoaded.locationList.updateSpeed(ResultsLoaded.locationList.get(0))
                     }
                     // ResultsLoaded.locationList.speed=updateSpeed(currentLocation)
                     val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
