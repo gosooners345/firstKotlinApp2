@@ -13,21 +13,19 @@ class LocationList : ArrayList<Location>() {
 
     fun updateSpeed(location: Location?) {
         if (location!!.hasSpeed())
-            speed = location?.speed
+           this.speed = location.speed * 2.237f
         else {
-            this.speed = location?.speed?.times(-3.6f)
-            //  this.speed = (this.speed!!*2.2369362920544f / 3.6f)
+            this.speed = 0.0f
         }
     }
 
     fun updateSpeed(location1: Location?, location2: Location?) {
 
-        this.speed = ((location1!!.distanceTo(location2) * 3.281f) / 5280f / (location2!!.elapsedRealtimeNanos - location1!!.elapsedRealtimeNanos))// (location2!!.time - location1.time))
-        //this.speed =(this.speed!! * 2.237f)
-
-        var doubleMiles = (location1!!.distanceTo(location2).toDouble() * 3.281) / 5280.00
-        //  this.speed=(speed!!*2.2369362920544f / 3.6f)
+        this.speed = ((location2!!.distanceTo(location1)) / ((location1!!.elapsedRealtimeNanos / 1000000000f) - (location2!!.elapsedRealtimeNanos / 1000000000f))) * 2.237f
     }
 
+    fun speedString(): String? {
+        return String.format("%5.5f MPH", this.speed)
+    }
 
 }

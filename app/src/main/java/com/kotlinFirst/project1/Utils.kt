@@ -3,10 +3,16 @@ package com.kotlinFirst.project1
 import android.content.Context
 import android.location.Location
 import androidx.core.content.edit
+import java.text.SimpleDateFormat
+import java.util.*
+
 
 fun Location?.toText(): String {
+    val date = Calendar.getInstance().time
+    val formatter = SimpleDateFormat.getDateTimeInstance()
+    val formattedDate = formatter.format(date)
     return if (this != null) {
-        "($latitude, $longitude)"
+        "($latitude, $longitude, $formattedDate)"
     } else {
         "Unknown location"
     }

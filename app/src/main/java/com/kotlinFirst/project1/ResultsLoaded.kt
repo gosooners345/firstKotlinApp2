@@ -25,6 +25,7 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.text.FirebaseVisionText
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer
 import kotlinx.android.synthetic.main.results_page.*
+import java.lang.StringBuilder
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -70,20 +71,29 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.results_page)
+
         uri = Uri.parse(intent.getStringExtra("IMAGE"))
         title = intent.getStringExtra("MODE")
-        if (allPermissionsGranted()) {
+        if (title.contains("Speed")) {
+            setContentView(R.layout.results_page)
+
+        } else {
+            setContentView(R.layout.document_results)
+            processPhotoResults(uri, false)
+            resultImage.setImageURI(uri)
+        }
+        if (allPermissionsGranted() && title.contains("Speed")) {
 
             sharedPreferences =
                     getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
             foregroundOnlyBroadcastReceiver = ForegroundOnlyBroadcastReceiver()
+
             stopButton.setOnClickListener {
                 val enabled = sharedPreferences.getBoolean(
                         SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
 
                 if (!enabled) {
-                    // TODO: Step 1.0, Review Permissions: Checks and requests if needed.
+
                     if (allPermissionsGranted()) {
                         foregroundOnlyLocationService?.subscribeToLocationUpdates()
                                 ?: Log.d("THISAPP", "Service Not Bound")
@@ -94,9 +104,14 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
                 } else
                     foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
             }
+            clear_button.setOnClickListener {
+                resultStatsView.text = ""
+                currSpeedLabel.text = "0.000 MPH"
+
+            }
             if (title == "Speed Limit Scanner") {
                 processPhotoResults(uri, true)
-                resultImage.setImageURI(uri)
+                //resultImage.setImageURI(uri)
             } else {
                 processPhotoResults(uri, false)
                 resultImage.setImageURI(uri)
@@ -107,45 +122,53 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     }
 
 
-    //This should really transfer to a different class soon
+
     override fun onStart() {
         super.onStart()
+        if (title.contains("Speed")) {
+            updateButtonState(
+                    sharedPreferences.getBoolean(SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
+            )
+            sharedPreferences.registerOnSharedPreferenceChangeListener(this)
 
-        updateButtonState(
-                sharedPreferences.getBoolean(SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
-        )
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+            val serviceIntent = Intent(this, LocationOnlyService::class.java)
+            bindService(serviceIntent, foregroundOnlyServiceConnection, Context.BIND_AUTO_CREATE)
+        }
 
-        val serviceIntent = Intent(this, LocationOnlyService::class.java)
-        bindService(serviceIntent, foregroundOnlyServiceConnection, Context.BIND_AUTO_CREATE)
-
-        firstLocation = (foregroundOnlyLocationService?.currentLocation)
-        speed = updateSpeed(firstLocation)
     }
 
     override fun onResume() {
         super.onResume()
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-                foregroundOnlyBroadcastReceiver,
-                IntentFilter(
-                        LocationOnlyService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
-        )
+        if (title.contains("Speed")) {
+            stopButton.performClick()
+            LocalBroadcastManager.getInstance(this).registerReceiver(
+                    foregroundOnlyBroadcastReceiver,
+                    IntentFilter(
+                            LocationOnlyService.ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
+            )
+        }
     }
 
     override fun onPause() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(
-                foregroundOnlyBroadcastReceiver
-        )
+        if (title.contains("Speed")) {
+            stopButton.performClick()
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(
+                    foregroundOnlyBroadcastReceiver
+            )
+        }
         super.onPause()
     }
 
     override fun onStop() {
-        if (foregroundOnlyLocationServiceBound) {
-            unbindService(foregroundOnlyServiceConnection)
-            foregroundOnlyLocationServiceBound = false
-        }
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
+        if (title.contains("Speed")) {
+            stopButton.performClick()
 
+            if (foregroundOnlyLocationServiceBound) {
+                unbindService(foregroundOnlyServiceConnection)
+                foregroundOnlyLocationServiceBound = false
+            }
+            sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
+        }
         super.onStop()
     }
 
@@ -176,9 +199,10 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
                 baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
+    //Process photo results and get text for extraction
     private fun processPhotoResults(uri: Uri?, locationON: Boolean?) {
         var fireText: FirebaseVisionText?
-        //Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+
         var detectedWords: String?
         val image: FirebaseVisionImage =
                 FirebaseVisionImage.fromFilePath(this, uri!!)
@@ -233,96 +257,108 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
         }).toString()
         Toast.makeText(this, extractedTextString, Toast.LENGTH_SHORT).show()
         textBox.text = extractedTextString
-        resultStatsView.text = result.result?.textBlocks?.size.toString()
-        try {
+        resultsView.text = result.result?.textBlocks?.size.toString()
+        if (title.contains("Speed")) {
+            try {
 //Code for speed limit detection
-            if (locationON!!) {
-                if (extractedTextString!!.toUpperCase().contains(("SPEED" + "\n" + "LIMIT")) || extractedTextString!!.toUpperCase().contains("SPEED")) {
-                    stopButton.performClick()
-                    val stringArray = extractedTextString!!.split("\n")
-                    speedLimitValue = "SPEED LIMIT " + stringArray[2]
-                    postedSpeedLimit = stringArray[2].toInt()
-                    listCount = locationList.count()
-                    postedSpeedLimitLabel.text = postedSpeedLimit.toString() + " MPH"
-                    updateSpeedViews()
+                if (locationON!!) {
+                    if (extractedTextString!!.toUpperCase().contains(("SPEED" + "\n" + "LIMIT")) || extractedTextString!!.toUpperCase().contains("SPEED")) {
+                        stopButton.performClick()
+                        val stringArray = extractedTextString!!.split("\n")
+                        speedLimitValue = "SPEED LIMIT " + stringArray[2]
+                        postedSpeedLimit = stringArray[2].toInt()
+                        listCount = locationList.count()
+                        postedSpeedLimitLabel.text = postedSpeedLimit.toString() + " MPH"
+                        updateSpeedViews()
 
+                    }
                 }
+            } catch (ex: Exception) {
+                Log.d("FAIL", ex.message)
+                ex.printStackTrace()
+                currSpeedLabel.text = ex.message
             }
-        } catch (ex: Exception) {
-            Log.d("FAIL", ex.message)
-            ex.printStackTrace()
-            currSpeedLabel.text = ex.message
+        } else {
+            Toast.makeText(this, "Nothing new here", Toast.LENGTH_LONG).show()
         }
     }
 
-
-    public fun updateSpeedViews() {
+    // Updates the speed limit scanner text fields
+    fun updateSpeedViews() {
         speed = locationList!!.speed!!
-        Toast.makeText(this, speed!!.toString(), Toast.LENGTH_SHORT).show()
         currSpeedLabel.text = (speed!!).toString() + " MPH"
+        val fmt = Formatter(StringBuilder())
+        fmt.format(Locale.US, "%5.5f", speed)
+        var curStrSpeed = fmt.toString()
+
+        if (curStrSpeed.contains("NaN"))
+            curStrSpeed = "0.0"
+        currSpeedLabel.text = curStrSpeed + " MPH"
+        Toast.makeText(this, curStrSpeed + " MPH", Toast.LENGTH_SHORT).show()
 
         if (speed!! > postedSpeedLimit!!) {
             Toast.makeText(this, "GOING TOO FAST", Toast.LENGTH_SHORT).show()
             currSpeedLabel.setTextColor(Color.RED)
+        } else {
+            currSpeedLabel.setTextColor(Color.BLACK)
         }
-        Toast.makeText(this, speed.toString(), Toast.LENGTH_LONG).show()
-
-
+        logResultsToScreen("Foreground location: ${foregroundOnlyLocationService?.currentLocation?.toText()}")
+        logResultsToScreen("Speed is $curStrSpeed  MPH")
     }
 
-    private fun updateSpeed(location: Location?): Float {
-        // TODO Auto-generated method stub
-        var nCurrentSpeed = 0f
-
-        if (location != null) {
-
-            nCurrentSpeed = location.speed * 3.6f
-            nCurrentSpeed = nCurrentSpeed * 2.2369362920544f / 3.6f
-        }
-        return nCurrentSpeed
-        /*val fmt = Formatter(StringBuilder())
-        fmt.format(Locale.US, "%5.1f", nCurrentSpeed)
-        var strCurrentSpeed = fmt.toString()
-        strCurrentSpeed = strCurrentSpeed.replace(' ', '0')
-        var strUnits = "miles/hour"*/
-
-
-    }
-
-    private fun updateSpeed(location: Location?, lastLocation: Location?): Float {
-        // TODO Auto-generated method stub
-        var nCurrentSpeed = 0f
-        var speed = 0f
-        if (location != null) {
-            speed = (location!!.distanceTo(lastLocation!!) / (location.time - lastLocation.time))
-            speed = speed * 2.2369362920544f
-            if (location.hasSpeed()) {
-                speed = location.speed * 2.2369362920544f / 3.6f
-            }
-
-        }
-        nCurrentSpeed = Math.round(speed).toFloat()
-        return nCurrentSpeed
-
-
-    }
-
-    override fun onLocationChanged(location: Location) {
-        updateSpeedViews()
-        logResultsToScreen(location.toText())
-
-    }
-
+    //Implements of Location class really not needed, but here because
+    override fun onLocationChanged(location: Location) {}
     override fun onProviderDisabled(provider: String) {}
     override fun onProviderEnabled(provider: String) {}
     override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
     override fun onGpsStatusChanged(event: Int) {}
-
     override fun onBackPressed() {
-        if (stopButton.text.contains("Stop Updates"))
-            stopButton.performClick()
+        if (title.contains("Speed"))
+            if (stopButton.text.contains("Stop Updates"))
+                stopButton.performClick()
         super.onBackPressed()
 
+    }
+
+    //Handles Location broadcast
+    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val location = intent.getParcelableExtra<Location>(
+                    LocationOnlyService.EXTRA_LOCATION
+            )
+            if (location != null) {
+                updateSpeedViews()
+            }
+        }
+    }
+
+    private fun updateButtonState(trackingLocation: Boolean) {
+        if (title.contains("Speed"))
+            if (trackingLocation) {
+                stopButton.text = getString(R.string.stop_location_updates_button_text)
+                firstLocation = foregroundOnlyLocationService?.currentLocation
+                Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({
+                    Log.d("Speed Test", "ExecutorMethod Updating speed")
+                    //   updateSpeedViews()
+                }, 1, 1, TimeUnit.SECONDS)
+
+            } else {
+                stopButton.text = getString(R.string.start_location_updates_button_text)
+
+            }
+    }
+    private fun logResultsToScreen(output: String) {
+        val outputWithPreviousLogs = "$output\r\n${resultStatsView.text}"
+        resultStatsView.text = outputWithPreviousLogs
+    }
+
+    override fun onSharedPreferenceChanged(p0: SharedPreferences?, p1: String?) {
+        if (title.contains("Speed"))
+            if (p1 == SharedPreferenceUtil.KEY_FOREGROUND_ENABLED) {
+                updateButtonState(sharedPreferences.getBoolean(
+                        SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
+                )
+            }
     }
 
 
@@ -332,51 +368,4 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
         var locationList: LocationList = LocationList()
         var speed = 0f
     }
-
-    private inner class ForegroundOnlyBroadcastReceiver : BroadcastReceiver() {
-
-        override fun onReceive(context: Context, intent: Intent) {
-            val location = intent.getParcelableExtra<Location>(
-                    LocationOnlyService.EXTRA_LOCATION
-            )
-
-            if (location != null) {
-                logResultsToScreen("Foreground location: ${location.toText()}")
-                updateSpeedViews()
-
-            }
-        }
-    }
-
-    private fun updateButtonState(trackingLocation: Boolean) {
-        if (trackingLocation) {
-            stopButton.text = getString(R.string.stop_location_updates_button_text)
-            firstLocation = foregroundOnlyLocationService?.currentLocation
-            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({
-                Log.d("Speed Test", "ExecutorMethod Updating speed")
-                updateSpeedViews()
-            }, 1, 15, TimeUnit.SECONDS)
-
-        } else {
-            stopButton.text = getString(R.string.start_location_updates_button_text)
-
-        }
-    }
-
-    private fun logResultsToScreen(output: String) {
-        val outputWithPreviousLogs = "$output\n${resultStatsView.text}"
-        resultStatsView.text = outputWithPreviousLogs
-    }
-
-    override fun onSharedPreferenceChanged(p0: SharedPreferences?, p1: String?) {
-        if (p1 == SharedPreferenceUtil.KEY_FOREGROUND_ENABLED) {
-            updateButtonState(sharedPreferences.getBoolean(
-                    SharedPreferenceUtil.KEY_FOREGROUND_ENABLED, false)
-            )
-        }
-    }
 }
-
-
-
-
