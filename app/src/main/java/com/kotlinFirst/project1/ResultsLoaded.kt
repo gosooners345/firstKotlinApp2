@@ -95,14 +95,17 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
                 if (!enabled) {
 
                     if (allPermissionsGranted()) {
+                        foregroundOnlyLocationService?.serviceRunningInForeground = true
                         foregroundOnlyLocationService?.subscribeToLocationUpdates()
                                 ?: Log.d("THISAPP", "Service Not Bound")
 
                     } else
                         ActivityCompat.requestPermissions(this, LOCATION_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
 
-                } else
+                } else {
                     foregroundOnlyLocationService?.unsubscribeToLocationUpdates()
+                    foregroundOnlyLocationService?.serviceRunningInForeground = false
+                }
             }
             clear_button.setOnClickListener {
                 resultStatsView.text = ""
@@ -140,7 +143,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     override fun onResume() {
         super.onResume()
         if (title.contains("Speed")) {
-            stopButton.performClick()
+            // stopButton.performClick()
             LocalBroadcastManager.getInstance(this).registerReceiver(
                     foregroundOnlyBroadcastReceiver,
                     IntentFilter(
@@ -154,7 +157,13 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
             stopButton.performClick()
             LocalBroadcastManager.getInstance(this).unregisterReceiver(
                     foregroundOnlyBroadcastReceiver
+
             )
+            if (foregroundOnlyLocationServiceBound) {
+                unbindService(foregroundOnlyServiceConnection)
+                foregroundOnlyLocationServiceBound = false
+            }
+            sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
         }
         super.onPause()
     }
@@ -285,25 +294,25 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
 
     // Updates the speed limit scanner text fields
     fun updateSpeedViews() {
-        speed = locationList!!.speed!!
-        currSpeedLabel.text = (speed!!).toString() + " MPH"
+
+        currSpeedLabel.text = (locationList!!.speed!!).toString() + " MPH"
         val fmt = Formatter(StringBuilder())
-        fmt.format(Locale.US, "%5.5f", speed)
+        fmt.format(Locale.US, "%5.5f", locationList!!.speed)
         var curStrSpeed = fmt.toString()
 
         if (curStrSpeed.contains("NaN"))
             curStrSpeed = "0.0"
         currSpeedLabel.text = curStrSpeed + " MPH"
-        Toast.makeText(this, curStrSpeed + " MPH", Toast.LENGTH_SHORT).show()
+        logResultsToScreen("Foreground location: ${foregroundOnlyLocationService?.currentLocation?.toText()}")
+        logResultsToScreen("Speed is $curStrSpeed  MPH")
 
-        if (speed!! > postedSpeedLimit!!) {
-            Toast.makeText(this, "GOING TOO FAST", Toast.LENGTH_SHORT).show()
+        if (locationList!!.speed!! > postedSpeedLimit!!) {
+            logResultsToScreen("Going Too FAST!!")
             currSpeedLabel.setTextColor(Color.RED)
         } else {
             currSpeedLabel.setTextColor(Color.BLACK)
         }
-        logResultsToScreen("Foreground location: ${foregroundOnlyLocationService?.currentLocation?.toText()}")
-        logResultsToScreen("Speed is $curStrSpeed  MPH")
+
     }
 
     //Implements of Location class really not needed, but here because
@@ -337,10 +346,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
             if (trackingLocation) {
                 stopButton.text = getString(R.string.stop_location_updates_button_text)
                 firstLocation = foregroundOnlyLocationService?.currentLocation
-                Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({
-                    Log.d("Speed Test", "ExecutorMethod Updating speed")
-                    //   updateSpeedViews()
-                }, 1, 1, TimeUnit.SECONDS)
+
 
             } else {
                 stopButton.text = getString(R.string.start_location_updates_button_text)
@@ -366,6 +372,5 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
         private val LOCATION_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         private const val REQUEST_CODE_PERMISSIONS = 10
         var locationList: LocationList = LocationList()
-        var speed = 0f
     }
 }

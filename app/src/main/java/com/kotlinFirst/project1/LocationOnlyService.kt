@@ -30,7 +30,8 @@ class LocationOnlyService : Service(), LocationListener {
     //is it here?
     private var configurationChange = false
 
-    private var serviceRunningInForeground = false
+
+    var serviceRunningInForeground = false
 
     //Notifications
     private lateinit var notificationManager: NotificationManager
@@ -48,21 +49,23 @@ class LocationOnlyService : Service(), LocationListener {
             override fun onLocationResult(p0: LocationResult?) {
                 super.onLocationResult(p0)
                 if (p0?.lastLocation != null) {
-                    currentLocation = p0.lastLocation
-                    Log.d(TAG, "Location updated $currentLocation")
-                    ResultsLoaded.locationList.add(currentLocation!!)
-                    var count = ResultsLoaded.locationList.count()
-
-                    if (count > 1) {
-                        ResultsLoaded.locationList.updateSpeed(currentLocation, ResultsLoaded.locationList.get(count - 2))
-                    } else {
-                        ResultsLoaded.locationList.updateSpeed(currentLocation)
-                    }
-                    // ResultsLoaded.locationList.speed=updateSpeed(currentLocation)
-                    val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
-                    intent.putExtra(EXTRA_LOCATION, currentLocation)
-                    LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
                     if (serviceRunningInForeground) {
+                        currentLocation = p0.lastLocation
+                        Log.d(TAG, "Location updated $currentLocation")
+                        ResultsLoaded.locationList.add(currentLocation!!)
+                        var count = ResultsLoaded.locationList.count()
+
+                        if (count > 1) {
+                            Log.d(TAG, "More than one location update")
+                            ResultsLoaded.locationList.updateSpeed(currentLocation, ResultsLoaded.locationList.get(count - 2))
+                        } else {
+                            Log.d(TAG, "Solo Location Speed Update")
+                            ResultsLoaded.locationList.updateSpeed(currentLocation)
+                        }
+                        // ResultsLoaded.locationList.speed=updateSpeed(currentLocation)
+                        val intent = Intent(ACTION_FOREGROUND_ONLY_LOCATION_BROADCAST)
+                        intent.putExtra(EXTRA_LOCATION, currentLocation)
+                        LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
                     }
                 } else {
                     Log.d(TAG, "Location missing in callback.")
