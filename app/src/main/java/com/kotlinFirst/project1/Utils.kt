@@ -7,17 +7,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-fun Location?.toText(): String {
-    val date = Calendar.getInstance().time
-    val formatter = SimpleDateFormat.getDateTimeInstance()
-    val formattedDate = formatter.format(date)
-    return if (this != null) {
-        "($latitude, $longitude, $formattedDate)"
-    } else {
-        "Unknown location"
-    }
-}
-
 internal object SharedPreferenceUtil {
 
     const val KEY_FOREGROUND_ENABLED = "tracking_foreground_location"

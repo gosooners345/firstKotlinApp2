@@ -4,7 +4,7 @@ import android.location.Location
 import androidx.annotation.FloatRange
 import kotlin.math.roundToInt
 
-class LocationList : ArrayList<Location>() {
+class LocationList : ArrayList<SLocation>() {
     var speed: Float? = null
 
     init {
@@ -13,7 +13,7 @@ class LocationList : ArrayList<Location>() {
 
     fun updateSpeed(location: Location?) {
         if (location!!.hasSpeed())
-           this.speed = location.speed * 2.237f
+            this.speed = location.speed * 2.237f
         else {
             this.speed = 0.0f
         }

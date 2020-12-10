@@ -24,12 +24,15 @@ import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.text.FirebaseVisionText
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer
+import kotlinx.android.synthetic.main.notes_layout.*
 import kotlinx.android.synthetic.main.results_page.*
+import kotlinx.android.synthetic.main.results_page.resultImage
 import java.lang.StringBuilder
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
+import kotlinx.android.synthetic.main.notes_layout.textBox as textBox1
 
 
 class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener, IBaseGpsListener {
@@ -37,7 +40,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     var extractedTextString: String? = null
     //Speed Limit Scanner Location Variables
 
-
+    var shareString: String? = null
     var foregroundOnlyLocationService: LocationOnlyService? = null
     private lateinit var foregroundOnlyBroadcastReceiver: ForegroundOnlyBroadcastReceiver
     private var foregroundOnlyLocationServiceBound = false
@@ -78,6 +81,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
             setContentView(R.layout.results_page)
 
         } else {
+
             setContentView(R.layout.document_results)
             processPhotoResults(uri, false)
             resultImage.setImageURI(uri)
@@ -107,9 +111,12 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
                     foregroundOnlyLocationService?.serviceRunningInForeground = false
                 }
             }
+            map_button.setOnClickListener { shareListener() }
             clear_button.setOnClickListener {
                 resultStatsView.text = ""
                 currSpeedLabel.text = "0.000 MPH"
+                if (locationList.count() > 0)
+                    locationList.clear()
 
             }
             if (title == "Speed Limit Scanner") {
@@ -124,7 +131,17 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
 
     }
 
+    private fun shareListener() {
+        if (title.contains("Speed"))
+            shareString = resultStatsView.text.toString()
+        val sendIntent = Intent()
+        sendIntent.action = Intent.ACTION_SEND
+        val INTENTNAME = "SHARE"
+        sendIntent.putExtra(Intent.EXTRA_TEXT, shareString)
+        sendIntent.type = "text/plain"
+        startActivity(Intent.createChooser(sendIntent, INTENTNAME))
 
+    }
 
     override fun onStart() {
         super.onStart()
@@ -264,8 +281,11 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
         extractedTextString = (if (result.isComplete) result.result?.text; else {
             "not yet"
         }).toString()
+        shareString = extractedTextString
         Toast.makeText(this, extractedTextString, Toast.LENGTH_SHORT).show()
+
         textBox.text = extractedTextString
+
         resultsView.text = result.result?.textBlocks?.size.toString()
         if (title.contains("Speed")) {
             try {
@@ -303,7 +323,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
         if (curStrSpeed.contains("NaN"))
             curStrSpeed = "0.0"
         currSpeedLabel.text = curStrSpeed + " MPH"
-        logResultsToScreen("Foreground location: ${foregroundOnlyLocationService?.currentLocation?.toText()}")
+        logResultsToScreen("Foreground location: ${foregroundOnlyLocationService?.currentLocation?.toString()}")
         logResultsToScreen("Speed is $curStrSpeed  MPH")
 
         if (locationList!!.speed!! > postedSpeedLimit!!) {
@@ -323,7 +343,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     override fun onGpsStatusChanged(event: Int) {}
     override fun onBackPressed() {
         if (title.contains("Speed"))
-            if (stopButton.text.contains("Stop Updates"))
+            if (stopButton.text.contains("Stop"))
                 stopButton.performClick()
         super.onBackPressed()
 
@@ -349,7 +369,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
 
 
             } else {
-                stopButton.text = getString(R.string.start_location_updates_button_text)
+                stopButton.text = "Start"
 
             }
     }

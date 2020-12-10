@@ -22,7 +22,7 @@ class LocationOnlyService : Service(), LocationListener {
     private lateinit var locationRequest: LocationRequest
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     public lateinit var locationCallback: LocationCallback
-    public var currentLocation: Location? = null
+    public var currentLocation: SLocation? = null
 
     //Service Binder
     private val localBinder = LocalBinder()
@@ -40,9 +40,9 @@ class LocationOnlyService : Service(), LocationListener {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         locationRequest = LocationRequest().apply {
-            interval = TimeUnit.SECONDS.toMillis(0)
+            interval = TimeUnit.SECONDS.toMillis(1)
             fastestInterval = TimeUnit.SECONDS.toMillis(0)
-            maxWaitTime = TimeUnit.SECONDS.toMillis(0)
+            maxWaitTime = TimeUnit.SECONDS.toMillis(1)
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
         locationCallback = object : LocationCallback() {
@@ -50,8 +50,8 @@ class LocationOnlyService : Service(), LocationListener {
                 super.onLocationResult(p0)
                 if (p0?.lastLocation != null) {
                     if (serviceRunningInForeground) {
-                        currentLocation = p0.lastLocation
-                        Log.d(TAG, "Location updated $currentLocation")
+                        currentLocation = SLocation(p0.lastLocation)
+                        Log.d(TAG, "Location updated ${currentLocation.toString()}")
                         ResultsLoaded.locationList.add(currentLocation!!)
                         var count = ResultsLoaded.locationList.count()
 
