@@ -131,6 +131,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
 
     }
 
+
     private fun shareListener() {
         if (title.contains("Speed"))
             shareString = resultStatsView.text.toString()
@@ -199,9 +200,8 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     }
 
 
-    override fun onRequestPermissionsResult(
-            requestCode: Int, permissions: Array<String>, grantResults:
-            IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults:
+    IntArray) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
                 foregroundOnlyLocationService?.subscribeToLocationUpdates()
@@ -228,7 +228,6 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
     //Process photo results and get text for extraction
     private fun processPhotoResults(uri: Uri?, locationON: Boolean?) {
         var fireText: FirebaseVisionText?
-
         var detectedWords: String?
         val image: FirebaseVisionImage =
                 FirebaseVisionImage.fromFilePath(this, uri!!)
@@ -299,9 +298,9 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
                         listCount = locationList.count()
                         postedSpeedLimitLabel.text = postedSpeedLimit.toString() + " MPH"
                         updateSpeedViews()
-
                     }
                 }
+
             } catch (ex: Exception) {
                 Log.d("FAIL", ex.message)
                 ex.printStackTrace()

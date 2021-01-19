@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FirstKotlinApp">
-
+        <activity android:name=".SaveNotesActivity"></activity>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -23,11 +23,11 @@
         <activity
             android:name=".CameraActivity"
             android:label="@string/app_name"
-            android:theme="@style/Theme.FirstKotlinApp"></activity>
+            android:theme="@style/Theme.FirstKotlinApp" />
         <activity
             android:name=".ResultsLoaded"
             android:label="@string/app_name"
-            android:theme="@style/Theme.FirstKotlinApp"></activity>
+            android:theme="@style/Theme.FirstKotlinApp" />
 
         <meta-data
             android:name="com.google.firebase.ml.vision.DEPENDENCIES"
@@ -42,23 +42,24 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/paths" />
         </provider>
+
         <service
             android:name=".LocationOnlyService"
             android:foregroundServiceType="location">
+
             <!-- Any inner elements would go here. -->
         </service>
     </application>
+
     <uses-feature android:name="android.hardware.camera.any" />
 
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
-
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
     <uses-permission android:name="android.permission.CAMERA" />
-
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
 </manifest>
