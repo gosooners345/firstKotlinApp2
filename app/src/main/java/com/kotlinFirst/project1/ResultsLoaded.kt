@@ -77,9 +77,9 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
 
         uri = Uri.parse(intent.getStringExtra("IMAGE"))
         title = intent.getStringExtra("MODE")
+        // Sets results view to a speed limit reader
         if (title.contains("Speed")) {
             setContentView(R.layout.results_page)
-
         } else {
 
             setContentView(R.layout.document_results)
@@ -89,7 +89,7 @@ class ResultsLoaded : AppCompatActivity(), SharedPreferences.OnSharedPreferenceC
         if (allPermissionsGranted() && title.contains("Speed")) {
 
             sharedPreferences =
-                    getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
+                getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE)
             foregroundOnlyBroadcastReceiver = ForegroundOnlyBroadcastReceiver()
 
             stopButton.setOnClickListener {
